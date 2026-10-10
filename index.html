@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Surprise for Riya</title>
+<style>
+  body, html {
+    margin: 0; 
+    padding: 0; 
+    width: 100%; 
+    height: 100%; 
+    overflow: hidden;
+    display: flex; 
+    justify-content: center; 
+    align-items: center;
+    font-family: 'Georgia', cursive, sans-serif;
+  }
+  
+  /* Romantic Flowing Liquid Background */
+  .bg-container {
+    position: absolute; 
+    top: 0; left: 0; 
+    width: 100%; height: 100%;
+    overflow: hidden; 
+    z-index: -1;
+    background: linear-gradient(45deg, #ff9a9e, #fecfef, #ffc3a0, #ffafbd);
+    background-size: 400% 400%;
+    animation: gradientFlow 10s ease infinite;
+  }
+  
+  @keyframes gradientFlow {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+  }
+  
+  /* Glowing orbs to create the "Gemini-style" liquid blend */
+  .orb {
+    position: absolute; 
+    border-radius: 50%; 
+    filter: blur(80px); 
+    opacity: 0.8;
+    animation: floatOrb 12s infinite alternate ease-in-out;
+  }
+  .orb1 { width: 350px; height: 350px; background: #ff4081; top: -50px; left: -50px; }
+  .orb2 { width: 450px; height: 450px; background: #ff80ab; bottom: -100px; right: -50px; animation-delay: -3s; }
+  .orb3 { width: 300px; height: 300px; background: #ff6e40; top: 40%; left: 30%; animation-delay: -6s; }
+  
+  @keyframes floatOrb {
+    0% { transform: translate(0, 0) scale(1); }
+    100% { transform: translate(60px, 60px) scale(1.3); }
+  }
+
+  /* Scratch Card Container */
+  .card-container {
+    position: relative; 
+    width: 320px; 
+    height: 200px;
+    border-radius: 20px; 
+    box-shadow: 0 15px 35px rgba(0,0,0,0.2);
+    overflow: hidden; 
+    background: #fff;
+  }
+  
+  .message {
+    position: absolute; 
+    top: 0; left: 0; 
+    width: 100%; height: 100%;
+    display: flex; 
+    justify-content: center; 
+    align-items: center;
+    text-align: center; 
+    font-size: 32px; 
+    font-weight: bold;
+    background: linear-gradient(45deg, #ff4081, #ff80ab);
+    -webkit-background-clip: text; 
+    -webkit-text-fill-color: transparent;
+    padding: 20px; 
+    box-sizing: border-box;
+  }
+  
+  canvas {
+    position: absolute; 
+    top: 0; left: 0; 
+    width: 100%; height: 100%;
+    cursor: crosshair; 
+    transition: opacity 0.6s ease;
+  }
+  
+  /* Hearts Animation Container */
+  .hearts-container {
+    position: absolute; 
+    top: 0; left: 0; 
+    width: 100%; height: 100%;
+    pointer-events: none; 
+    z-index: 10; 
+    overflow: hidden;
+  }
+  
+  .heart {
+    position: absolute; 
+    font-size: 28px; 
+    animation: fall linear forwards;
+  }
+  
+  @keyframes fall {
+    to { transform: translateY(100vh) rotate(360deg); }
+  }
+</style>
+</head>
+<body>
+  <!-- Background Elements -->
+  <div class="bg-container">
+    <div class="orb orb1"></div>
+    <div class="orb orb2"></div>
+    <div class="orb orb3"></div>
+  </div>
+  
+  <!-- Container for falling hearts -->
+  <div class="hearts-container" id="hearts-container"></div>
+
+  <!-- The Scratch Card -->
+  <div class="card-container">
+    <div class="message">Happiest Birthday Riya!</div>
+    <canvas id="scratch-pad"></canvas>
+  </div>
+
+  <script>
+    const canvas = document.getElementById('scratch-pad');
+    const ctx = canvas.getContext('2d', { willReadFrequently: true });
+    let isDrawing = false;
+    let isRevealed = false;
+
+    // Set canvas dimensions
+    canvas.width = 320;
+    canvas.height = 200;
+
+    // Create the silver scratch layer
+    ctx.fillStyle = '#b3b3b3';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    
+    // Add texture to look like a real scratch card
+    for(let i = 0; i < 4000; i++) {
+        ctx.fillStyle = Math.random() > 0.5 ? '#a6a6a6' : '#c0c0c0';
+        ctx.fillRect(Math.random() * canvas.width, Math.random() * canvas.height, 2, 2);
+    }
+    
+    // Add instruction text on top
+    ctx.fillStyle = '#777';
+    ctx.font = 'bold 22px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('Scratch Here', canvas.width / 2, canvas.height / 2 + 8);
+
+    function getMousePos(evt) {
+      const rect = canvas.getBoundingClientRect();
+      const scaleX = canvas.width / rect.width;
+      const scaleY = canvas.height / rect.height;
+      let clientX = evt.clientX;
+      let clientY = evt.clientY;
+      
+      if(evt.touches && evt.touches.length > 0) {
+          clientX = evt.touches[0].clientX;
+          clientY = evt.touches[0].clientY;
+      }
+      return {
+        x: (clientX - rect.left) * scaleX,
+        y: (clientY - rect.top) * scaleY
+      };
+    }
+
+    function startDrawing(e) {
+      if (isRevealed) return;
+      isDrawing = true;
+      scratch(e);
+    }
+
+    function endDrawing() {
+      isDrawing = false;
+      checkReveal();
+    }
+
+    function scratch(e) {
+      if (!isDrawing || isRevealed) return;
+      e.preventDefault(); 
+      
+      const pos = getMousePos(e);
+      ctx.globalCompositeOperation = 'destination-out';
+      ctx.beginPath();
+      ctx.arc(pos.x, pos.y, 20, 0, Math.PI * 2); // Brush size
+      ctx.fill();
+    }
+
+    function checkReveal() {
+      if (isRevealed) return;
+      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      const pixels = imageData.data;
+      let transparentPixels = 0;
+      
+      for (let i = 3; i < pixels.length; i += 4) {
+        if (pixels[i] < 255) transparentPixels++;
+      }
+      
+      const percentage = (transparentPixels / (pixels.length / 4)) * 100;
+      
+      // Reveal when 40% is scratched
+      if (percentage > 40) {
+        isRevealed = true;
+        canvas.style.opacity = '0';
+        setTimeout(() => {
+            canvas.style.display = 'none';
+            triggerHearts();
+        }, 600);
+      }
+    }
+
+    // Event listeners for mouse
+    canvas.addEventListener('mousedown', startDrawing);
+    canvas.addEventListener('mousemove', scratch);
+    canvas.addEventListener('mouseup', endDrawing);
+    canvas.addEventListener('mouseleave', endDrawing);
+
+    // Event listeners for touch (phones)
+    canvas.addEventListener('touchstart', startDrawing, {passive: false});
+    canvas.addEventListener('touchmove', scratch, {passive: false});
+    canvas.addEventListener('touchend', endDrawing);
+    
+    // Romantic heart emoji confetti
+    function triggerHearts() {
+        const container = document.getElementById('hearts-container');
+        const emojis = ['❤️', '💖', '💘', '💕', '💗'];
+        
+        for(let i = 0; i < 60; i++) {
+            setTimeout(() => {
+                const heart = document.createElement('div');
+                heart.className = 'heart';
+                heart.innerText = emojis[Math.floor(Math.random() * emojis.length)];
+                heart.style.left = Math.random() * 100 + 'vw';
+                heart.style.top = '-50px';
+                // Random fall speed and size
+                heart.style.animationDuration = (Math.random() * 2.5 + 2) + 's';
+                heart.style.transform = `scale(${Math.random() * 0.5 + 0.8})`;
+                container.appendChild(heart);
+                
+                // Cleanup to prevent lag
+                setTimeout(() => heart.remove(), 5000);
+            }, i * 60); 
+        }
+    }
+  </script>
+</body>
+</html>
