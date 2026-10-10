@@ -85,7 +85,7 @@
     top: 0; left: 0; 
     width: 100%; height: 100%;
     cursor: crosshair; 
-    transition: opacity 0.6s ease;
+    transition: opacity 0.4s ease;
   }
   
   /* Hearts Animation Container */
@@ -110,17 +110,14 @@
 </style>
 </head>
 <body>
-  <!-- Background Elements -->
   <div class="bg-container">
     <div class="orb orb1"></div>
     <div class="orb orb2"></div>
     <div class="orb orb3"></div>
   </div>
   
-  <!-- Container for falling hearts -->
   <div class="hearts-container" id="hearts-container"></div>
 
-  <!-- The Scratch Card -->
   <div class="card-container">
     <div class="message">Happiest Birthday Riya!</div>
     <canvas id="scratch-pad"></canvas>
@@ -131,22 +128,19 @@
     const ctx = canvas.getContext('2d', { willReadFrequently: true });
     let isDrawing = false;
     let isRevealed = false;
+    let lastCheckTime = 0; // Added for mobile optimization
 
-    // Set canvas dimensions
     canvas.width = 320;
     canvas.height = 200;
 
-    // Create the silver scratch layer
     ctx.fillStyle = '#b3b3b3';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     
-    // Add texture to look like a real scratch card
     for(let i = 0; i < 4000; i++) {
         ctx.fillStyle = Math.random() > 0.5 ? '#a6a6a6' : '#c0c0c0';
         ctx.fillRect(Math.random() * canvas.width, Math.random() * canvas.height, 2, 2);
     }
     
-    // Add instruction text on top
     ctx.fillStyle = '#777';
     ctx.font = 'bold 22px sans-serif';
     ctx.textAlign = 'center';
@@ -177,7 +171,10 @@
 
     function endDrawing() {
       isDrawing = false;
-      checkReveal();
+      // Force one final check when they lift their finger
+      if (!isRevealed) {
+          forceCheckReveal();
+      }
     }
 
     function scratch(e) {
@@ -187,8 +184,20 @@
       const pos = getMousePos(e);
       ctx.globalCompositeOperation = 'destination-out';
       ctx.beginPath();
-      ctx.arc(pos.x, pos.y, 20, 0, Math.PI * 2); // Brush size
+      ctx.arc(pos.x, pos.y, 22, 0, Math.PI * 2); // Slightly larger brush for faster clearing
       ctx.fill();
+      
+      // OPTIMIZATION: Only run the heavy check every 300 milliseconds while scratching
+      const now = Date.now();
+      if (now - lastCheckTime > 300) {
+          lastCheckTime = now;
+          checkReveal();
+      }
+    }
+
+    function forceCheckReveal() {
+        lastCheckTime = 0; // Bypass the throttle
+        checkReveal();
     }
 
     function checkReveal() {
@@ -198,47 +207,40 @@
       let transparentPixels = 0;
       let totalPixelsChecked = 0;
       
-      // OPTIMIZATION: Check every 16th byte (every 4th pixel) to heavily reduce phone lag
-      for (let i = 3; i < pixels.length; i += 16) {
+      // Extreme mobile optimization: check every 32nd byte (every 8th pixel)
+      for (let i = 3; i < pixels.length; i += 32) {
         if (pixels[i] < 255) transparentPixels++;
         totalPixelsChecked++;
       }
       
       const percentage = (transparentPixels / totalPixelsChecked) * 100;
       
-      // Reveal when 40% is scratched
-      if (percentage > 40) {
+      // Reveal at 35% to make it pop sooner
+      if (percentage > 35) {
         isRevealed = true;
-        
-        // Trigger celebrations INSTANTLY, no delay!
         triggerCelebration();
         
-        // Fade out canvas smoothly
         canvas.style.opacity = '0';
         setTimeout(() => {
             canvas.style.display = 'none';
-        }, 600);
+        }, 400);
       }
     }
 
-    // Event listeners for mouse
     canvas.addEventListener('mousedown', startDrawing);
     canvas.addEventListener('mousemove', scratch);
     canvas.addEventListener('mouseup', endDrawing);
     canvas.addEventListener('mouseleave', endDrawing);
 
-    // Event listeners for touch (phones)
     canvas.addEventListener('touchstart', startDrawing, {passive: false});
     canvas.addEventListener('touchmove', scratch, {passive: false});
     canvas.addEventListener('touchend', endDrawing);
     
-    // Trigger both hearts and confetti crackers
     function triggerCelebration() {
         triggerHearts();
         triggerConfettiCrackers();
     }
     
-    // Romantic heart emoji shower
     function triggerHearts() {
         const container = document.getElementById('hearts-container');
         const emojis = ['❤️', '💖', '💘', '💕', '💗'];
@@ -259,11 +261,9 @@
         }
     }
 
-    // Colorful confetti crackers shooting from bottom corners
     function triggerConfettiCrackers() {
         const colors = ['#f44336', '#e91e63', '#9c27b0', '#2196f3', '#03a9f4', '#00bcd4', '#4CAF50', '#FFEB3B', '#FF9800'];
         
-        // Shoot 60 pieces from the left and 60 from the right
         for (let i = 0; i < 60; i++) {
             createConfettiPiece('left', colors);
             createConfettiPiece('right', colors);
@@ -283,13 +283,11 @@
         confetti.style.pointerEvents = 'none';
         document.body.appendChild(confetti);
 
-        // Calculate explosion physics
         const direction = side === 'left' ? 1 : -1;
         const destinationX = direction * (Math.random() * (window.innerWidth * 0.6) + 50);
         const destinationY = - (Math.random() * (window.innerHeight * 0.7) + 150);
         const rotation = Math.random() * 720 - 360;
 
-        // Use Web Animations API for smooth arcs
         const animation = confetti.animate([
             { transform: `translate(0, 0) rotate(0deg)`, opacity: 1 },
             { transform: `translate(${destinationX * 0.6}px, ${destinationY}px) rotate(${rotation / 2}deg)`, offset: 0.5, opacity: 1 },
