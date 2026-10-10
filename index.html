@@ -7,7 +7,7 @@
 <!-- Adding canvas-confetti library for the cracker explosion effect -->
 <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&family=Poppins:wght@500;700&display=swap" rel="stylesheet">
-  
+
 <style>
   body, html {
     margin: 0; 
@@ -18,29 +18,13 @@
     display: flex; 
     justify-content: center; 
     align-items: center;
-    font-family: sans-serif;
+    font-family: 'Poppins', sans-serif;
+    background-color: #fff0f5; /* Soft blush base */
+    overscroll-behavior: none;
   }
   
   /* Romantic Flowing Liquid Background */
-  .bg-container {
-    position: absolute; 
-    top: 0; left: 0; 
-    width: 100%; height: 100%;
-    overflow: hidden; 
-    z-index: -1;
-    background: linear-gradient(45deg, #ff9a9e, #fecfef, #ffc3a0, #ffafbd);
-    background-size: 400% 400%;
-    animation: gradientFlow 10s ease infinite;
-  }
-  
-  @keyframes gradientFlow {
-    0% { background-position: 0% 50%; }
-    50% { background-position: 100% 50%; }
-    100% { background-position: 0% 50%; }
-  }
-  
-  /* Glowing orbs for the liquid blend effect */
-  .orb {
+   .orb {
     position: absolute; 
     border-radius: 50%; 
     filter: blur(80px); 
@@ -56,15 +40,61 @@
     100% { transform: translate(60px, 60px) scale(1.3); }
   }
 
+  .fluid-blob {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(80px);
+    opacity: 0.8;
+    mix-blend-mode: multiply;
+    will-change: transform;
+  }
+
+  /* Fluid animations */
+  @keyframes flow1 {
+    0% { transform: translate(0, 0) scale(1); }
+    33% { transform: translate(15vw, 20vh) scale(1.2); }
+    66% { transform: translate(-10vw, 30vh) scale(0.9); }
+    100% { transform: translate(0, 0) scale(1); }
+  }
+
+  @keyframes flow2 {
+    0% { transform: translate(0, 0) scale(1); }
+    50% { transform: translate(-20vw, -15vh) scale(1.3); }
+    100% { transform: translate(0, 0) scale(1); }
+  }
+
+  .blob-pink {
+    top: -20%; left: -10%; 
+    width: 70vw; height: 70vw;
+    background: #ffb6c1; 
+    animation: flow1 22s infinite ease-in-out alternate;
+  }
+
+  .blob-red {
+    bottom: -20%; right: -10%; 
+    width: 80vw; height: 80vw;
+    background: #ff8fa3; 
+    animation: flow2 26s infinite ease-in-out alternate;
+  }
+
+  .blob-peach {
+    top: 20%; left: 20%; 
+    width: 60vw; height: 60vw;
+    background: #ffdab9; 
+    animation: flow1 24s infinite ease-in-out alternate-reverse;
+  }
+
   /* Scratch Card Container */
   .card-container {
     position: relative; 
-    width: 320px; 
-    height: 200px;
-    border-radius: 20px; 
-    box-shadow: 0 15px 35px rgba(0,0,0,0.2);
+    width: 85%;
+    max-width: 380px; 
+    aspect-ratio: 4/3;
+    border-radius: 24px; 
+    box-shadow: 0 20px 40px rgba(255, 105, 180, 0.25), 0 0 20px rgba(255, 255, 255, 0.6);
     overflow: hidden; 
-    background: #fff;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
   }
   
   .message {
@@ -75,17 +105,15 @@
     justify-content: center; 
     align-items: center;
     text-align: center; 
-    
-    /* NEW: Beautiful cursive font */
     font-family: 'Dancing Script', cursive;
-    font-size: 42px; 
-    line-height: 1.2;
-    
-    background: linear-gradient(45deg, #e91e63, #ff4081);
+    font-size: 2.8rem; 
+    line-height: 1.3;
+    background: linear-gradient(135deg, #f43f5e, #db2777);
     -webkit-background-clip: text; 
     -webkit-text-fill-color: transparent;
     padding: 20px; 
     box-sizing: border-box;
+    z-index: 1;
   }
   
   canvas {
@@ -93,12 +121,13 @@
     top: 0; left: 0; 
     width: 100%; height: 100%;
     cursor: crosshair; 
-    transition: opacity 0.4s ease;
+    transition: opacity 0.8s ease;
+    z-index: 2;
   }
   
   /* Hearts Animation Container */
   .hearts-container {
-    position: absolute; 
+    position: fixed; 
     top: 0; left: 0; 
     width: 100%; height: 100%;
     pointer-events: none; 
@@ -113,52 +142,68 @@
   }
   
   @keyframes fall {
-    to { transform: translateY(100vh) rotate(360deg); }
+    to { transform: translateY(110vh) rotate(360deg); }
   }
 </style>
 </head>
 <body>
-  <div class="bg-container">
-    <div class="orb orb1"></div>
-    <div class="orb orb2"></div>
-    <div class="orb orb3"></div>
+  <!-- Fluid Aurora Elements -->
+  <div class="aurora-container">
+    <div class="fluid-blob blob-pink"></div>
+    <div class="fluid-blob blob-red"></div>
+    <div class="fluid-blob blob-peach"></div>
   </div>
   
+  <!-- Container for falling heart emojis -->
   <div class="hearts-container" id="hearts-container"></div>
 
-  <div class="card-container">
-    <div class="message">eeeeeeeeeeeeeeeee  Happiest Birthday Riya!! ❤️❤️</div>
+  <!-- The Scratch Card -->
+  <div class="card-container" id="card-container">
+    <div class="message">eeeeeeeeeeeeeeeeee      Happiest Birthday Riya! ❤️❤️ </div>
     <canvas id="scratch-pad"></canvas>
   </div>
 
   <script>
+    const container = document.getElementById('card-container');
     const canvas = document.getElementById('scratch-pad');
     const ctx = canvas.getContext('2d', { willReadFrequently: true });
     let isDrawing = false;
     let isRevealed = false;
-    let lastCheckTime = 0; 
 
-    canvas.width = 320;
-    canvas.height = 200;
-
-    // Draw scratch layer
-    ctx.fillStyle = '#b3b3b3';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-    for(let i = 0; i < 4000; i++) {
-        ctx.fillStyle = Math.random() > 0.5 ? '#a6a6a6' : '#c0c0c0';
-        ctx.fillRect(Math.random() * canvas.width, Math.random() * canvas.height, 2, 2);
+    function initCanvas() {
+        canvas.width = container.offsetWidth;
+        canvas.height = container.offsetHeight;
+        drawCover();
     }
-    
-    // Scratch Here text
-    ctx.fillStyle = '#777';
-    ctx.font = 'bold 22px sans-serif';
-    ctx.textAlign = 'center';
-    ctx.fillText('Scratch Here', canvas.width / 2, canvas.height / 2 + 8);
+
+    function drawCover() {
+        // Create the metallic silver scratch layer
+        const gradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+        gradient.addColorStop(0, '#e2e8f0');
+        gradient.addColorStop(0.5, '#cbd5e1');
+        gradient.addColorStop(1, '#94a3b8');
+        
+        ctx.fillStyle = gradient;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        
+        // Add subtle texture to look like a real scratch card
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
+        for(let i = 0; i < canvas.width; i+=4) {
+            for(let j = 0; j < canvas.height; j+=4) {
+                if (Math.random() > 0.5) ctx.fillRect(i, j, 2, 2);
+            }
+        }
+        
+        // Add instruction text on top
+        ctx.fillStyle = '#64748b';
+        ctx.font = 'bold 22px Poppins, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('✨ Scratch Here ✨', canvas.width / 2, canvas.height / 2);
+    }
 
     function getMousePos(evt) {
       const rect = canvas.getBoundingClientRect();
-      const scaleX = canvas.width / rect.width;
-      const scaleY = canvas.height / rect.height;
       let clientX = evt.clientX;
       let clientY = evt.clientY;
       
@@ -167,8 +212,8 @@
           clientY = evt.touches[0].clientY;
       }
       return {
-        x: (clientX - rect.left) * scaleX,
-        y: (clientY - rect.top) * scaleY
+        x: clientX - rect.left,
+        y: clientY - rect.top
       };
     }
 
@@ -180,9 +225,7 @@
 
     function endDrawing() {
       isDrawing = false;
-      if (!isRevealed) {
-          forceCheckReveal();
-      }
+      checkReveal();
     }
 
     function scratch(e) {
@@ -190,105 +233,92 @@
       e.preventDefault(); 
       
       const pos = getMousePos(e);
+      // 'destination-out' erases the silver layer to show what's underneath
       ctx.globalCompositeOperation = 'destination-out';
       ctx.beginPath();
-      ctx.arc(pos.x, pos.y, 22, 0, Math.PI * 2); 
+      ctx.arc(pos.x, pos.y, 35, 0, Math.PI * 2); // Brush size
       ctx.fill();
-      
-      const now = Date.now();
-      if (now - lastCheckTime > 300) {
-          lastCheckTime = now;
-          checkReveal();
-      }
     }
 
-    function forceCheckReveal() {
-        lastCheckTime = 0; 
-        checkReveal();
-    }
-
+    let checkTimeout;
     function checkReveal() {
-      if (isRevealed) return;
-      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-      const pixels = imageData.data;
-      let transparentPixels = 0;
-      let totalPixelsChecked = 0;
+      if (isRevealed || checkTimeout) return;
       
-      for (let i = 3; i < pixels.length; i += 32) {
-        if (pixels[i] < 255) transparentPixels++;
-        totalPixelsChecked++;
-      }
-      
-      const percentage = (transparentPixels / totalPixelsChecked) * 100;
-      
-      if (percentage > 35) {
-        isRevealed = true;
-        triggerCelebration();
-        
-        canvas.style.opacity = '0';
-        setTimeout(() => {
-            canvas.style.display = 'none';
-        }, 400);
-      }
+      checkTimeout = setTimeout(() => {
+          const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+          const pixels = imageData.data;
+          let transparentPixels = 0;
+          
+          // Sample pixels (every 16th byte = 4th pixel) for performance
+          for (let i = 3; i < pixels.length; i += 16) {
+            if (pixels[i] < 128) transparentPixels++;
+          }
+          
+          const totalPixels = pixels.length / 16;
+          const percentage = (transparentPixels / totalPixels) * 100;
+          
+          // Reveal when 40% is scratched
+          if (percentage > 40) {
+            isRevealed = true;
+            canvas.style.opacity = '0';
+            setTimeout(() => {
+                canvas.style.display = 'none';
+                triggerCelebration();
+            }, 800);
+          }
+          checkTimeout = null;
+      }, 100);
     }
 
-    canvas.addEventListener('mousedown', startDrawing);
-    canvas.addEventListener('mousemove', scratch);
-    canvas.addEventListener('mouseup', endDrawing);
-    canvas.addEventListener('mouseleave', endDrawing);
-
-    canvas.addEventListener('touchstart', startDrawing, {passive: false});
-    canvas.addEventListener('touchmove', scratch, {passive: false});
-    canvas.addEventListener('touchend', endDrawing);
-    
+    // Run both celebration effects together!
     function triggerCelebration() {
-        triggerHearts();
-        triggerRealisticConfetti();
+        triggerFallingHearts();
+        triggerConfettiCrackers();
     }
     
-    function triggerHearts() {
-        const container = document.getElementById('hearts-container');
+    function triggerFallingHearts() {
+        const heartsContainer = document.getElementById('hearts-container');
         const emojis = ['❤️', '💖', '💘', '💕', '💗'];
         
-        for(let i = 0; i < 35; i++) {
+        for(let i = 0; i < 40; i++) {
             setTimeout(() => {
                 const heart = document.createElement('div');
                 heart.className = 'heart';
                 heart.innerText = emojis[Math.floor(Math.random() * emojis.length)];
-                heart.style.left = Math.random() * 100 + 'vw';
+                heart.style.left = (Math.random() * 100) + 'vw';
                 heart.style.top = '-50px';
-                heart.style.animationDuration = (Math.random() * 2.5 + 2) + 's';
+                // Randomize speed and size for natural look
+                heart.style.animationDuration = (Math.random() * 2 + 2.5) + 's';
                 heart.style.transform = `scale(${Math.random() * 0.5 + 0.8})`;
-                container.appendChild(heart);
+                heartsContainer.appendChild(heart);
                 
+                // Cleanup DOM after animation completes
                 setTimeout(() => heart.remove(), 5000);
             }, i * 100); 
         }
     }
 
-    // NEW: Realistic, physics-based confetti engine
-    function triggerRealisticConfetti() {
-        var duration = 3000;
-        var end = Date.now() + duration;
-        var colors = ['#f44336', '#e91e63', '#9c27b0', '#2196f3', '#03a9f4', '#00bcd4', '#4CAF50', '#FFEB3B', '#FF9800'];
+    function triggerConfettiCrackers() {
+        const duration = 4000;
+        const end = Date.now() + duration;
 
         (function frame() {
-            // Shoot from bottom left edge
+            // Shoot from bottom left corner
             confetti({
-                particleCount: 4,
+                particleCount: 6,
                 angle: 60,
-                spread: 55,
+                spread: 60,
                 origin: { x: 0, y: 1 },
-                colors: colors,
+                colors: ['#ffb6c1', '#ff1493', '#ff69b4', '#ffffff', '#ffd700'],
                 zIndex: 100
             });
-            // Shoot from bottom right edge
+            // Shoot from bottom right corner
             confetti({
-                particleCount: 4,
+                particleCount: 6,
                 angle: 120,
-                spread: 55,
+                spread: 60,
                 origin: { x: 1, y: 1 },
-                colors: colors,
+                colors: ['#ffb6c1', '#ff1493', '#ff69b4', '#ffffff', '#ffd700'],
                 zIndex: 100
             });
 
@@ -297,6 +327,24 @@
             }
         }());
     }
+
+    // Attach Event listeners
+    canvas.addEventListener('mousedown', startDrawing);
+    canvas.addEventListener('mousemove', scratch);
+    window.addEventListener('mouseup', endDrawing);
+    
+    // Touch Events for mobile
+    canvas.addEventListener('touchstart', startDrawing, {passive: false});
+    canvas.addEventListener('touchmove', scratch, {passive: false});
+    window.addEventListener('touchend', endDrawing);
+    
+    // Handle resizing beautifully
+    window.addEventListener('resize', () => {
+        if (!isRevealed) initCanvas();
+    });
+
+    // Initialize the canvas when the page loads
+    window.onload = initCanvas;
   </script>
 </body>
 </html>
