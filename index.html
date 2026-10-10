@@ -143,7 +143,7 @@
   <div class="hearts-container" id="hearts-container"></div>
 
   <div class="card-container" id="card-container">
-    <div class="message">eeeeeeeeeeeee<br>Happiest Birthday<br>Riya! ❤️</div>
+    <div class="message">Happiest Birthday<br>Riya! ❤️</div>
     <canvas id="scratch-pad"></canvas>
   </div>
 
@@ -227,7 +227,7 @@
       ctx.arc(pos.x, pos.y, 35, 0, Math.PI * 2); // Brush size
       ctx.fill();
 
-      // OPTIMIZATION: Throttle checking to prevent phone lag (checks max 6 times per sec)
+      // OPTIMIZATION: Throttle checking to prevent phone lag
       const now = Date.now();
       if (now - lastCheckTime > 150) {
           lastCheckTime = now;
@@ -302,10 +302,15 @@
         const duration = 4000;
         const end = Date.now() + duration;
 
-        (function frame() {
+        // FIXED: Use setInterval instead of requestAnimationFrame to stop mobile lag
+        const interval = setInterval(function() {
+            if (Date.now() > end) {
+                return clearInterval(interval);
+            }
+
             // Shoot from bottom left corner
             confetti({
-                particleCount: 6,
+                particleCount: 20, // Increased burst size for better effect
                 angle: 60,
                 spread: 60,
                 origin: { x: 0, y: 1 },
@@ -314,18 +319,14 @@
             });
             // Shoot from bottom right corner
             confetti({
-                particleCount: 6,
+                particleCount: 20,
                 angle: 120,
                 spread: 60,
                 origin: { x: 1, y: 1 },
                 colors: ['#ffb6c1', '#ff1493', '#ff69b4', '#ffffff', '#ffd700'],
                 zIndex: 100
             });
-
-            if (Date.now() < end) {
-                requestAnimationFrame(frame);
-            }
-        }());
+        }, 250); // Fire every 250ms instead of trying to fire every frame
     }
 
     // Attach Event listeners
