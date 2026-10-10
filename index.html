@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Surprise for Riya</title>
-<!-- Adding canvas-confetti library for the cracker explosion effect -->
+<!-- Adding canvas-confetti library for the realistic cracker explosion effect -->
 <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&family=Poppins:wght@500;700&display=swap" rel="stylesheet">
 
@@ -24,22 +24,6 @@
   }
   
   /* Romantic Flowing Liquid Background */
-   .orb {
-    position: absolute; 
-    border-radius: 50%; 
-    filter: blur(80px); 
-    opacity: 0.8;
-    animation: floatOrb 12s infinite alternate ease-in-out;
-  }
-  .orb1 { width: 350px; height: 350px; background: #ff4081; top: -50px; left: -50px; }
-  .orb2 { width: 450px; height: 450px; background: #ff80ab; bottom: -100px; right: -50px; animation-delay: -3s; }
-  .orb3 { width: 300px; height: 300px; background: #ff6e40; top: 40%; left: 30%; animation-delay: -6s; }
-  
-  @keyframes floatOrb {
-    0% { transform: translate(0, 0) scale(1); }
-    100% { transform: translate(60px, 60px) scale(1.3); }
-  }
-
   .fluid-blob {
     position: absolute;
     border-radius: 50%;
@@ -121,8 +105,9 @@
     top: 0; left: 0; 
     width: 100%; height: 100%;
     cursor: crosshair; 
-    transition: opacity 0.8s ease;
+    transition: opacity 0.4s ease; /* Faster fade out */
     z-index: 2;
+    touch-action: none; /* Crucial fix: prevents screen from scrolling while scratching on mobile */
   }
   
   /* Hearts Animation Container */
@@ -157,9 +142,8 @@
   <!-- Container for falling heart emojis -->
   <div class="hearts-container" id="hearts-container"></div>
 
-  <!-- The Scratch Card -->
   <div class="card-container" id="card-container">
-    <div class="message">eeeeeeeeeeeeeeeeee      Happiest Birthday Riya! ❤️❤️ </div>
+    <div class="message">eeeeeeeeeeeee<br>Happiest Birthday<br>Riya! ❤️</div>
     <canvas id="scratch-pad"></canvas>
   </div>
 
@@ -169,6 +153,7 @@
     const ctx = canvas.getContext('2d', { willReadFrequently: true });
     let isDrawing = false;
     let isRevealed = false;
+    let lastCheckTime = 0;
 
     function initCanvas() {
         canvas.width = container.offsetWidth;
@@ -225,7 +210,10 @@
 
     function endDrawing() {
       isDrawing = false;
-      checkReveal();
+      if (!isRevealed) {
+          // Instantly checks the moment she lifts her finger
+          forceCheckReveal();
+      }
     }
 
     function scratch(e) {
@@ -238,36 +226,48 @@
       ctx.beginPath();
       ctx.arc(pos.x, pos.y, 35, 0, Math.PI * 2); // Brush size
       ctx.fill();
+
+      // OPTIMIZATION: Throttle checking to prevent phone lag (checks max 6 times per sec)
+      const now = Date.now();
+      if (now - lastCheckTime > 150) {
+          lastCheckTime = now;
+          checkReveal();
+      }
     }
 
-    let checkTimeout;
+    function forceCheckReveal() {
+        lastCheckTime = 0; 
+        checkReveal();
+    }
+
     function checkReveal() {
-      if (isRevealed || checkTimeout) return;
+      if (isRevealed) return;
       
-      checkTimeout = setTimeout(() => {
-          const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-          const pixels = imageData.data;
-          let transparentPixels = 0;
-          
-          // Sample pixels (every 16th byte = 4th pixel) for performance
-          for (let i = 3; i < pixels.length; i += 16) {
-            if (pixels[i] < 128) transparentPixels++;
-          }
-          
-          const totalPixels = pixels.length / 16;
-          const percentage = (transparentPixels / totalPixels) * 100;
-          
-          // Reveal when 40% is scratched
-          if (percentage > 40) {
-            isRevealed = true;
-            canvas.style.opacity = '0';
-            setTimeout(() => {
-                canvas.style.display = 'none';
-                triggerCelebration();
-            }, 800);
-          }
-          checkTimeout = null;
-      }, 100);
+      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      const pixels = imageData.data;
+      let transparentPixels = 0;
+      let totalPixelsChecked = 0;
+      
+      // Extreme Mobile Optimization: Sample pixels (every 32nd byte = 8th pixel) 
+      for (let i = 3; i < pixels.length; i += 32) {
+        if (pixels[i] < 128) transparentPixels++;
+        totalPixelsChecked++;
+      }
+      
+      const percentage = (transparentPixels / totalPixelsChecked) * 100;
+      
+      // Reveal when 35% is scratched for a fast payoff
+      if (percentage > 35) {
+        isRevealed = true;
+        
+        // Trigger celebrations instantly!
+        triggerCelebration();
+        
+        canvas.style.opacity = '0';
+        setTimeout(() => {
+            canvas.style.display = 'none';
+        }, 400);
+      }
     }
 
     // Run both celebration effects together!
