@@ -4,6 +4,11 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Surprise for Riya</title>
+<!-- Import a beautiful, romantic cursive font -->
+<link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&display=swap" rel="stylesheet">
+<!-- Import professional physics-based confetti -->
+<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
 <style>
   body, html {
     margin: 0; 
@@ -14,7 +19,7 @@
     display: flex; 
     justify-content: center; 
     align-items: center;
-    font-family: 'Georgia', cursive, sans-serif;
+    font-family: sans-serif;
   }
   
   /* Romantic Flowing Liquid Background */
@@ -71,9 +76,13 @@
     justify-content: center; 
     align-items: center;
     text-align: center; 
-    font-size: 32px; 
-    font-weight: bold;
-    background: linear-gradient(45deg, #ff4081, #ff80ab);
+    
+    /* NEW: Beautiful cursive font */
+    font-family: 'Dancing Script', cursive;
+    font-size: 42px; 
+    line-height: 1.2;
+    
+    background: linear-gradient(45deg, #e91e63, #ff4081);
     -webkit-background-clip: text; 
     -webkit-text-fill-color: transparent;
     padding: 20px; 
@@ -118,31 +127,30 @@
   
   <div class="hearts-container" id="hearts-container"></div>
 
- <!-- The Scratch Card -->
   <div class="card-container">
-    <div class="message">eeeeeeeeeeeee    Happiest Birthday Riya! ❤️❤️</div>
+    <div class="message">Happiest Birthday<br>Riya!</div>
     <canvas id="scratch-pad"></canvas>
   </div>
-
 
   <script>
     const canvas = document.getElementById('scratch-pad');
     const ctx = canvas.getContext('2d', { willReadFrequently: true });
     let isDrawing = false;
     let isRevealed = false;
-    let lastCheckTime = 0; // Added for mobile optimization
+    let lastCheckTime = 0; 
 
     canvas.width = 320;
     canvas.height = 200;
 
+    // Draw scratch layer
     ctx.fillStyle = '#b3b3b3';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
-    
     for(let i = 0; i < 4000; i++) {
         ctx.fillStyle = Math.random() > 0.5 ? '#a6a6a6' : '#c0c0c0';
         ctx.fillRect(Math.random() * canvas.width, Math.random() * canvas.height, 2, 2);
     }
     
+    // Scratch Here text
     ctx.fillStyle = '#777';
     ctx.font = 'bold 22px sans-serif';
     ctx.textAlign = 'center';
@@ -173,7 +181,6 @@
 
     function endDrawing() {
       isDrawing = false;
-      // Force one final check when they lift their finger
       if (!isRevealed) {
           forceCheckReveal();
       }
@@ -186,10 +193,9 @@
       const pos = getMousePos(e);
       ctx.globalCompositeOperation = 'destination-out';
       ctx.beginPath();
-      ctx.arc(pos.x, pos.y, 22, 0, Math.PI * 2); // Slightly larger brush for faster clearing
+      ctx.arc(pos.x, pos.y, 22, 0, Math.PI * 2); 
       ctx.fill();
       
-      // OPTIMIZATION: Only run the heavy check every 300 milliseconds while scratching
       const now = Date.now();
       if (now - lastCheckTime > 300) {
           lastCheckTime = now;
@@ -198,7 +204,7 @@
     }
 
     function forceCheckReveal() {
-        lastCheckTime = 0; // Bypass the throttle
+        lastCheckTime = 0; 
         checkReveal();
     }
 
@@ -209,7 +215,6 @@
       let transparentPixels = 0;
       let totalPixelsChecked = 0;
       
-      // Extreme mobile optimization: check every 32nd byte (every 8th pixel)
       for (let i = 3; i < pixels.length; i += 32) {
         if (pixels[i] < 255) transparentPixels++;
         totalPixelsChecked++;
@@ -217,7 +222,6 @@
       
       const percentage = (transparentPixels / totalPixelsChecked) * 100;
       
-      // Reveal at 35% to make it pop sooner
       if (percentage > 35) {
         isRevealed = true;
         triggerCelebration();
@@ -240,14 +244,14 @@
     
     function triggerCelebration() {
         triggerHearts();
-        triggerConfettiCrackers();
+        triggerRealisticConfetti();
     }
     
     function triggerHearts() {
         const container = document.getElementById('hearts-container');
         const emojis = ['❤️', '💖', '💘', '💕', '💗'];
         
-        for(let i = 0; i < 50; i++) {
+        for(let i = 0; i < 35; i++) {
             setTimeout(() => {
                 const heart = document.createElement('div');
                 heart.className = 'heart';
@@ -259,48 +263,40 @@
                 container.appendChild(heart);
                 
                 setTimeout(() => heart.remove(), 5000);
-            }, i * 70); 
+            }, i * 100); 
         }
     }
 
-    function triggerConfettiCrackers() {
-        const colors = ['#f44336', '#e91e63', '#9c27b0', '#2196f3', '#03a9f4', '#00bcd4', '#4CAF50', '#FFEB3B', '#FF9800'];
-        
-        for (let i = 0; i < 60; i++) {
-            createConfettiPiece('left', colors);
-            createConfettiPiece('right', colors);
-        }
-    }
+    // NEW: Realistic, physics-based confetti engine
+    function triggerRealisticConfetti() {
+        var duration = 3000;
+        var end = Date.now() + duration;
+        var colors = ['#f44336', '#e91e63', '#9c27b0', '#2196f3', '#03a9f4', '#00bcd4', '#4CAF50', '#FFEB3B', '#FF9800'];
 
-    function createConfettiPiece(side, colors) {
-        const confetti = document.createElement('div');
-        confetti.style.position = 'absolute';
-        confetti.style.width = (Math.random() * 8 + 6) + 'px';
-        confetti.style.height = (Math.random() * 15 + 8) + 'px';
-        confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
-        confetti.style.bottom = '-20px';
-        confetti.style[side] = (Math.random() * 5 + 2) + 'vw';
-        confetti.style.borderRadius = (Math.random() > 0.5 ? '50%' : '2px');
-        confetti.style.zIndex = '11';
-        confetti.style.pointerEvents = 'none';
-        document.body.appendChild(confetti);
+        (function frame() {
+            // Shoot from bottom left edge
+            confetti({
+                particleCount: 4,
+                angle: 60,
+                spread: 55,
+                origin: { x: 0, y: 1 },
+                colors: colors,
+                zIndex: 100
+            });
+            // Shoot from bottom right edge
+            confetti({
+                particleCount: 4,
+                angle: 120,
+                spread: 55,
+                origin: { x: 1, y: 1 },
+                colors: colors,
+                zIndex: 100
+            });
 
-        const direction = side === 'left' ? 1 : -1;
-        const destinationX = direction * (Math.random() * (window.innerWidth * 0.6) + 50);
-        const destinationY = - (Math.random() * (window.innerHeight * 0.7) + 150);
-        const rotation = Math.random() * 720 - 360;
-
-        const animation = confetti.animate([
-            { transform: `translate(0, 0) rotate(0deg)`, opacity: 1 },
-            { transform: `translate(${destinationX * 0.6}px, ${destinationY}px) rotate(${rotation / 2}deg)`, offset: 0.5, opacity: 1 },
-            { transform: `translate(${destinationX}px, 100vh) rotate(${rotation}deg)`, opacity: 0 }
-        ], {
-            duration: Math.random() * 1500 + 2000,
-            easing: 'cubic-bezier(.25, .46, .45, .94)',
-            fill: 'forwards'
-        });
-
-        animation.onfinish = () => confetti.remove();
+            if (Date.now() < end) {
+                requestAnimationFrame(frame);
+            }
+        }());
     }
   </script>
 </body>
